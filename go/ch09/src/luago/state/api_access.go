@@ -111,3 +111,19 @@ func (self *luaState) ToString(idx int) string {
 	s, _ := self.ToStringX(idx)
 	return s
 }
+
+func (self *luaState) IsGoFunction(idx int) bool {
+	val := self.stack.get(idx)
+	if c, ok := val.(*closure); ok {
+		return c.goFunc != nil
+	}
+	return false
+}
+
+func (self *luaState) ToGoFunction(idx int) api.GoFunction {
+	val := self.stack.get(idx)
+	if c, ok := val.(*closure); ok {
+		return c.goFunc
+	}
+	return nil
+}
