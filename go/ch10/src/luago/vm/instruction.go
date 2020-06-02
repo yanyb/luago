@@ -1,6 +1,8 @@
 package vm
 
-import "luago/api"
+import (
+	"luago/api"
+)
 
 const MAXARG_Bx = 1<<18 - 1
 const MAXARG_sBx = MAXARG_Bx >> 1
