@@ -26,6 +26,18 @@ func print(ls api.LuaState) int {
 	return 0
 }
 
+func getMetatable(ls api.LuaState) int {
+	if !ls.GetMetatable(1) {
+		ls.PushNil()
+	}
+	return 1
+}
+
+func setMetatable(ls api.LuaState) int {
+	ls.SetMetatable(1)
+	return 1
+}
+
 func main() {
 	if len(os.Args) > 1 {
 		data, err := ioutil.ReadFile(os.Args[1])
@@ -34,6 +46,8 @@ func main() {
 		}
 		ls := state.New()
 		ls.Register("print", print)
+		ls.Register("getmetatable", getMetatable)
+		ls.Register("setmetatable", setMetatable)
 		ls.Load(data, "chunk", "b")
 		ls.Call(0, 0)
 	}
