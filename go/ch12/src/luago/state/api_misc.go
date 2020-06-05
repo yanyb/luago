@@ -48,3 +48,17 @@ func (self *luaState) Concat(n int) {
 		}
 	}
 }
+
+func (self *luaState) Next(idx int) bool {
+	val := self.stack.get(idx)
+	if t, ok := val.(*luaTable); ok {
+		key := self.stack.pop()
+		if nextKey := t.nextKey(key); nextKey != nil {
+			self.stack.push(nextKey)
+			self.stack.push(t.get(nextKey))
+			return true
+		}
+		return false
+	}
+	panic("table expected!")
+}
