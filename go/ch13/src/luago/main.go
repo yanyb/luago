@@ -72,6 +72,18 @@ func _iPairsAux(ls api.LuaState) int {
 	}
 }
 
+func error(ls api.LuaState) int {
+	return ls.Error()
+}
+
+func pCall(ls api.LuaState) int {
+	nArgs := ls.GetTop() - 1
+	status := ls.PCall(nArgs, -1, 0)
+	ls.PushBoolean(status == api.LUA_OK)
+	ls.Insert(1)
+	return ls.GetTop()
+}
+
 func main() {
 	if len(os.Args) > 1 {
 		data, err := ioutil.ReadFile(os.Args[1])
@@ -85,6 +97,8 @@ func main() {
 		ls.Register("next", next)
 		ls.Register("pairs", pairs)
 		ls.Register("ipairs", iPairs)
+		ls.Register("error", error)
+		ls.Register("pcall", pCall)
 		ls.Load(data, "chunk", "b")
 		ls.Call(0, 0)
 	}
