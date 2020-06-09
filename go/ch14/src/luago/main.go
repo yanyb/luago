@@ -3,85 +3,40 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
-	"luago/api"
-	"luago/state"
+	_lexer "luago/compiler/lexer"
 	"os"
 )
 
-func print(ls api.LuaState) int {
-	nArgs := ls.GetTop()
-	for i := 1; i <= nArgs; i++ {
-		if ls.IsBoolean(i) {
-			fmt.Printf("%t", ls.ToBoolean(i))
-		} else if ls.IsString(i) {
-			fmt.Print(ls.ToString(i))
-		} else {
-			fmt.Print(ls.TypeName(ls.Type(i)))
-		}
-		if i < nArgs {
-			fmt.Print("\t")
+func testLexer(chunk, chunkName string) {
+	lexer := _lexer.NewLexer(chunk, chunkName)
+	for {
+		line, kind, token := lexer.NextToken()
+		fmt.Printf("[%2d] [%-10s] %s\n", line, kindToCategory(kind), token)
+		if kind == _lexer.TOKEN_EOF {
+			break
 		}
 	}
-	fmt.Println()
-	return 0
 }
 
-func getMetatable(ls api.LuaState) int {
-	if !ls.GetMetatable(1) {
-		ls.PushNil()
+func kindToCategory(kind int) string {
+	switch {
+	case kind < _lexer.TOKEN_SEP_SEMI:
+		return "other"
+	case kind <= _lexer.TOKEN_SEP_RCURLY:
+		return "separator"
+	case kind <= _lexer.TOKEN_OP_NOT:
+		return "operator"
+	case kind <= _lexer.TOKEN_KW_WHILE:
+		return "keyword"
+	case kind <= _lexer.TOKEN_IDENTIFIER:
+		return "identifier"
+	case kind <= _lexer.TOKEN_NUMBER:
+		return "number"
+	case kind <= _lexer.TOKEN_STRING:
+		return "string"
+	default:
+		return "other"
 	}
-	return 1
-}
-
-func setMetatable(ls api.LuaState) int {
-	ls.SetMetatable(1)
-	return 1
-}
-
-func next(ls api.LuaState) int {
-	ls.SetTop(2)
-	if ls.Next(1) {
-		return 2
-	} else {
-		ls.PushNil()
-		return 1
-	}
-}
-
-func pairs(ls api.LuaState) int {
-	ls.PushGoFunction(next)
-	ls.PushValue(1)
-	ls.PushNil()
-	return 3
-}
-
-func iPairs(ls api.LuaState) int {
-	ls.PushGoFunction(_iPairsAux)
-	ls.PushValue(1)
-	ls.PushInteger(0)
-	return 3
-}
-
-func _iPairsAux(ls api.LuaState) int {
-	i := ls.ToInteger(2) + 1
-	ls.PushInteger(i)
-	if ls.GetI(1, i) == api.LUA_TNIL {
-		return 1
-	} else {
-		return 2
-	}
-}
-
-func error(ls api.LuaState) int {
-	return ls.Error()
-}
-
-func pCall(ls api.LuaState) int {
-	nArgs := ls.GetTop() - 1
-	status := ls.PCall(nArgs, -1, 0)
-	ls.PushBoolean(status == api.LUA_OK)
-	ls.Insert(1)
-	return ls.GetTop()
 }
 
 func main() {
@@ -90,16 +45,6 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		ls := state.New()
-		ls.Register("print", print)
-		ls.Register("getmetatable", getMetatable)
-		ls.Register("setmetatable", setMetatable)
-		ls.Register("next", next)
-		ls.Register("pairs", pairs)
-		ls.Register("ipairs", iPairs)
-		ls.Register("error", error)
-		ls.Register("pcall", pCall)
-		ls.Load(data, "chunk", "b")
-		ls.Call(0, 0)
+		testLexer(string(data), os.Args[1])
 	}
 }
